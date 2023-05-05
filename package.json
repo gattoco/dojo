@@ -1,0 +1,17 @@
+{
+  "name": "dojo-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^18.16.3",
+    "fivem-js": "^1.5.2",
+    "typescript": "^5.0.4"
+  }
+}

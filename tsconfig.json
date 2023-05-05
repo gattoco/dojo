@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "module": "CommonJS",
+      "target": "ES2017",
+      "outDir": "dist",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "types": ["@citizenfx/client", "fivem-js", "@types/node"],
+    },
+    "include": ["src"],
+    "exclude": ["node_modules"]
+  }
