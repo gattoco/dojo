@@ -4,11 +4,11 @@ RegisterKeyMapping('smokebomb-ts', 'Smokebomb', 'keyboard', '4');
 
 */
 RegisterCommand('smokebomb-ts', () => {
-  emit('dojo:throwSmokeBomb-ts');
+    emit('dojo:throwSmokeBomb-ts');
 }, false);
 
 on('dojo:throwSmokeBomb-ts', () => {
-  throwSmokeBomb();
+    throwSmokeBomb();
 });
 
  
@@ -21,16 +21,26 @@ const playerPed = PlayerPedId();
 let playerCoords;
 let smokeEffectCoords;
 
-//"Throw" smokebomb animation
+//"Throw" smokebomb animation/prop
 const throwAnimDict = "anim@heists@narcotics@trash";
 const throwAnim = "throw";
+const smokebombProp = "prop_golf_ball";
 
-//Helper 
+
+
+//Helpers
 async function loadAnimDict(animDict: string): Promise<void> {
-  RequestAnimDict(animDict);
-  while (!HasAnimDictLoaded(animDict)) {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100));
-  }
+    RequestAnimDict(animDict);
+    while (!HasAnimDictLoaded(animDict)) {
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 100));
+    }
+}
+
+async function loadModel(model: string): Promise<void> {
+    RequestModel(GetHashKey(model));
+    while (!HasModelLoaded(GetHashKey(model))) {
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 100));
+    }
 }
 
 async function playSmokebombEffect(x: number, y: number, z: number, scale: number, duration: number, radius: number): Promise<void> {
@@ -73,9 +83,20 @@ async function throwSmokeBomb() {
     playerCoords = GetEntityCoords(playerPed, true);
     smokeEffectCoords = { x: playerCoords[0], y: playerCoords[1], z: playerCoords[2] - 1.0 };
 
+
+    //Load smokebomb and attach to hand
+    await loadModel(smokebombProp);
+    const smokeBombProp = CreateObject(GetHashKey("prop_golf_ball"), playerCoords[0], playerCoords[1], playerCoords[2], true, true, true);
+    
+    const handBoneIndex = GetEntityBoneIndexByName(playerPed, "SKEL_R_Hand");
+    AttachEntityToEntity(smokeBombProp, playerPed, handBoneIndex, 0, 0, 0, 0, 0, 0, false, false, false, false, 2, true);
+
     //throw smokebomb
     await loadAnimDict(throwAnimDict);
     TaskPlayAnim(playerPed, throwAnimDict, throwAnim, 4.0, -4.0, 300, 0, 0, false, false, false);
+
+    
+    DeleteObject(smokeBombProp);
 
     //run smoke function
     await playSmokebombEffect(smokeEffectCoords.x, smokeEffectCoords.y, smokeEffectCoords.z, 1.5, 10000, smokeInvisibleRadius);

@@ -1,5 +1,9 @@
 "use strict";
+/*
+
 RegisterKeyMapping('smokebomb-ts', 'Smokebomb', 'keyboard', '4');
+
+*/
 RegisterCommand('smokebomb-ts', () => {
     emit('dojo:throwSmokeBomb-ts');
 }, false);
@@ -12,13 +16,20 @@ const smokeInvisibleRadius = 2;
 const playerPed = PlayerPedId();
 let playerCoords;
 let smokeEffectCoords;
-//"Throw" smokebomb animation
+//"Throw" smokebomb animation/prop
 const throwAnimDict = "anim@heists@narcotics@trash";
 const throwAnim = "throw";
-//Helper 
+const smokebombProp = "prop_golf_ball";
+//Helpers
 async function loadAnimDict(animDict) {
     RequestAnimDict(animDict);
     while (!HasAnimDictLoaded(animDict)) {
+        await new Promise((resolve) => setTimeout(() => resolve(), 100));
+    }
+}
+async function loadModel(model) {
+    RequestModel(GetHashKey(model));
+    while (!HasModelLoaded(GetHashKey(model))) {
         await new Promise((resolve) => setTimeout(() => resolve(), 100));
     }
 }
@@ -30,7 +41,7 @@ async function playSmokebombEffect(x, y, z, scale, duration, radius) {
     const smokeParticle = StartParticleFxLoopedAtCoord('exp_grd_grenade_smoke', x, y, z, 0, 0, 0, scale, false, false, false, false);
     //Let the smoke grow for a bit before making Ped invis
     await new Promise((resolve) => setTimeout(() => resolve(), smokePrepTime));
-    //While the smoke is active, check where the Ped is in relation to the smoke. Toggle invis based on arbitrary "radius" value
+    //While the smoke is active, check where the Ped is in relation to the smoke. Toggle invis based on arbitrary "radius" value. Calculation is a bit shit though so might not be viable.
     while (GetGameTimer() - startTime <= duration) {
         const [curX, curY, curZ] = GetEntityCoords(playerPed, true);
         const dist = GetDistanceBetweenCoords(x, y, z, curX, curY, curZ, false);
@@ -50,11 +61,18 @@ async function playSmokebombEffect(x, y, z, scale, duration, radius) {
     StopParticleFxLooped(smokeParticle, false);
 }
 async function throwSmokeBomb() {
+    //get current position
     playerCoords = GetEntityCoords(playerPed, true);
     smokeEffectCoords = { x: playerCoords[0], y: playerCoords[1], z: playerCoords[2] - 1.0 };
+    //Load smokebomb and attach to hand
+    await loadModel(smokebombProp);
+    const smokeBombProp = CreateObject(GetHashKey("prop_golf_ball"), playerCoords[0], playerCoords[1], playerCoords[2], true, true, true);
+    const handBoneIndex = GetEntityBoneIndexByName(playerPed, "SKEL_R_Hand");
+    AttachEntityToEntity(smokeBombProp, playerPed, handBoneIndex, 0, 0, 0, 0, 0, 0, false, false, false, false, 2, true);
     //throw smokebomb
     await loadAnimDict(throwAnimDict);
     TaskPlayAnim(playerPed, throwAnimDict, throwAnim, 4.0, -4.0, 300, 0, 0, false, false, false);
+    DeleteObject(smokeBombProp);
     //run smoke function
     await playSmokebombEffect(smokeEffectCoords.x, smokeEffectCoords.y, smokeEffectCoords.z, 1.5, 10000, smokeInvisibleRadius);
 }
